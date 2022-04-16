@@ -90,12 +90,30 @@ extension ContentScene {
         }
         
         if startedTouchingNothing {
+            if checkIfIsTouchingAnyCircle(atPos: pos) {
+                return
+            }
+            
             guard let (touchedLine, touchedLineIndex) = getLineWhileTouchMoving(atPos: pos) else {
                 return
             }
             
             cutLine(touchedLine: touchedLine, touchedLineIndex: touchedLineIndex)
         }
+    }
+    
+    private func checkIfIsTouchingAnyCircle(atPos pos: CGPoint) -> Bool {
+        if mainCircle.circle.contains(self.convert(pos, to: mainCircle.node)) {
+            return true
+        }
+        
+        for circle in circles {
+            if circle.circle.contains(self.convert(pos, to: circle.node)) {
+                return true
+            }
+        }
+        
+        return false
     }
     
     private func cutLine(touchedLine: Line, touchedLineIndex: Int) {
