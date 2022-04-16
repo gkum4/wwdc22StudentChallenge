@@ -92,8 +92,14 @@ class Circle {
             yMultiplier = position.y > 0 ? 1 : -1
         }
         
+        let moveAction: SKAction = .move(
+            by: CGVector(dx: 20 * xMultiplier, dy: 20 * yMultiplier),
+            duration: 1
+        )
+        moveAction.timingMode = .easeInEaseOut
+        
         self.node.run(.sequence([
-            .move(by: CGVector(dx: 20 * xMultiplier, dy: 20 * yMultiplier), duration: 1),
+            moveAction,
             .run {
                 completeAnimationCallback()
             }
