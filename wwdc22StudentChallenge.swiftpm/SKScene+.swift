@@ -30,4 +30,8 @@ extension SKScene {
     func addChild(_ background: Background) {
         self.addChild(background.node)
     }
+    
+    func addChild(_ textOverlay: TextOverlay) {
+        self.addChild(textOverlay.node)
+    }
 }
