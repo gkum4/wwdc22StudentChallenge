@@ -17,6 +17,9 @@ extension ContentScene {
         self.addChild(mainCircle)
         placeCircles()
         self.addChild(background)
+        self.addChild(textOverlay)
+        self.addChild(contentCamera)
+        self.camera = contentCamera.node
     }
     
     private func placeCircles() {
@@ -25,7 +28,9 @@ extension ContentScene {
         let color = ColorSequence.shared.actualColor
         
         for _ in 1...numberOfCircles {
-            let circle = Circle(radius: circleRadius, color: color, animated: true)
+            let radius = circleRadius * CGFloat.random(in: 0.5...1)
+            
+            let circle = Circle(radius: radius, color: color, animated: true)
             circle.node.position = getUsusedPositionToPlaceCircle(
                 xRange: screenXRange,
                 yRange: screenYRange
@@ -71,3 +76,5 @@ extension ContentScene {
         return true
     }
 }
+
+// ideias Gui: - bolinhas que se aproximam do centro qnd tocadas - usar acelerometro

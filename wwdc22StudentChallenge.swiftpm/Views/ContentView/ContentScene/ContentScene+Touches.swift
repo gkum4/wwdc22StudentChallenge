@@ -13,38 +13,68 @@ extension ContentScene {
             startedTouchingNothing = true
             return
         }
-        
+
         if nodeTouched.name == Circle.Names.circle {
             onTouchCircle(nodeTouched: nodeTouched)
             return
         }
-        
+
         if nodeTouched.name == MainCircle.Names.mainCircle {
             onTouchMainCircle(nodeTouched: nodeTouched)
             return
         }
-        
+
         startedTouchingNothing = true
     }
     
     private func onTouchCircle(nodeTouched: SKNode) {
-        print("touched circle")
+        if !storyProgress.canCreateConnection {
+            return
+        }
         
         guard let circleTouched = findCircle(node: nodeTouched) else {
             return
         }
         
-        if circleTouched.hasLineAttached {
+        if circleTouched.hasLineAttached && storyProgress.canTapOnConnection {
+            background.runSpreadAnimation(
+                color: circleTouched.circle.fillColor,
+                atPos: circleTouched.node.position,
+                onCompletion: storyProgress.tappedOnConnection
+            )
             return
         }
         circleTouched.hasLineAttached = true
         
-        drawLine(circleA: mainCircle, circleB: circleTouched)
+        drawLine(circleA: mainCircle, circleB: circleTouched, onCompletion: {
+            self.storyProgress.createdConnection()
+        })
     }
     
     private func onTouchMainCircle(nodeTouched: SKNode) {
-        print("Touched Main Circle")
+        if nodeTouched != mainCircle.node {
+            return
+        }
+        
+//        guard let mainCircleTexture = mainCircle.circle.fillTexture else {
+//            return
+//        }
+        
+        background.runSpreadAnimation(
+            colors: mainCircle.gradientColors
+        )
+        
         testNode = nodeTouched
+    }
+    
+    func showText() {
+        textOverlay.show(onCompletion: {
+            self.textOverlay.nextStep(onCompletion: {
+                self.textOverlay.wait(forDuration: 1, onCompletion: {
+                    self.textOverlay.hide()
+                })
+            })
+        })
     }
     
     private func getTouchedNode(atPos pos: CGPoint) -> SKNode? {
@@ -57,7 +87,11 @@ extension ContentScene {
         return nil
     }
     
-    private func drawLine(circleA: Circle, circleB: Circle) {
+    private func drawLine(
+        circleA: Circle,
+        circleB: Circle,
+        onCompletion: @escaping () -> Void = {}
+    ) {
         circleA.pauseMovingAnimation()
         circleB.pauseMovingAnimation()
         
@@ -77,6 +111,7 @@ extension ContentScene {
             circleB.runChangeColorAnimation(to: newColor, withDuration: 1, onCompletion: {
                 circleA.continueMovingAnimation()
                 circleB.continueMovingAnimation()
+                onCompletion()
             })
         }
         
@@ -89,7 +124,7 @@ extension ContentScene {
             testNode.position = pos
         }
         
-        if startedTouchingNothing {
+        if startedTouchingNothing && storyProgress.canCutConnectionLine {
             if checkIfIsTouchingAnyCircle(atPos: pos) {
                 return
             }
@@ -98,7 +133,9 @@ extension ContentScene {
                 return
             }
             
-            cutLine(touchedLine: touchedLine, touchedLineIndex: touchedLineIndex)
+            cutLine(touchedLine: touchedLine, touchedLineIndex: touchedLineIndex, onCompletion: {
+                self.storyProgress.cutConnectionLine()
+            })
         }
     }
     
@@ -116,7 +153,11 @@ extension ContentScene {
         return false
     }
     
-    private func cutLine(touchedLine: Line, touchedLineIndex: Int) {
+    private func cutLine(
+        touchedLine: Line,
+        touchedLineIndex: Int,
+        onCompletion: @escaping () -> Void = {}
+    ) {
         if !touchedLine.completedAnimation {
             return
         }
@@ -133,12 +174,14 @@ extension ContentScene {
             if !(anchorCircleA is MainCircle) {
                 anchorCircleA.runMoveAwayAnimation(completeAnimationCallback: {
                     anchorCircleA.continueMovingAnimation()
+                    onCompletion()
                 })
             }
             
             if !(anchorCircleB is MainCircle) {
                 anchorCircleB.runMoveAwayAnimation(completeAnimationCallback: {
                     anchorCircleB.continueMovingAnimation()
+                    onCompletion()
                 })
             }
         })

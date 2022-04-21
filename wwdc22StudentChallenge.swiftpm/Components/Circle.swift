@@ -10,13 +10,11 @@ import SpriteKit
 class Circle {
     let node: SKNode
     var circle: SKShapeNode
-    var color: UIColor
     var hasLineAttached: Bool = false
     
     init(radius: CGFloat, color: UIColor, animated: Bool) {
         self.node = SKNode()
         self.node.name = Names.circle
-        self.color = color
         self.circle = Circle.buildCircle(radius: radius, color: color)
         self.node.addChild(self.circle)
         

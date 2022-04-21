@@ -7,21 +7,78 @@
 
 import SpriteKit
 
+protocol TextOverlayDelegate: AnyObject {
+    func getMainCircleColors() -> [CGColor]
+}
+
 class TextOverlay {
     let node: SKNode
-    let background: SKShapeNode
+    internal let background: SKShapeNode
     internal let sceneFrame: CGRect
     internal let layoutMetrics: LayoutMetrics
+    internal var step: Int = 0
+    internal let delegate: TextOverlayDelegate?
     
-    init(frame: CGRect) {
-        node = SKNode()
-        node.zPosition = 100
+    init(frame: CGRect, delegate: TextOverlayDelegate) {
+        node = TextOverlay.buildNode()
         sceneFrame = frame
-        background = TextOverlay.buildBackground(frame: frame, color: .darkGray)
         layoutMetrics = TextOverlay.buildLayoutMetrics(frame: frame)
-        
+        background = TextOverlay.buildBackground(frame: frame, color: .darkGray)
+        self.delegate = delegate
         node.addChild(background)
-//        test()
+    }
+    
+    func show(onCompletion: @escaping () -> Void = {}) {
+        changeBackgroundColor()
+        let fadeIn: SKAction = .fadeIn(withDuration: 1)
+        fadeIn.timingMode = .easeInEaseOut
+        
+        node.run(.sequence([
+            fadeIn,
+            .run {
+                onCompletion()
+            }
+        ]))
+    }
+    
+    func wait(forDuration time: TimeInterval, onCompletion: @escaping () -> Void = {}) {
+        node.run(.sequence([
+            .wait(forDuration: time),
+            .run {
+                onCompletion()
+            }
+        ]))
+    }
+    
+    func hide(onCompletion: @escaping () -> Void = {}) {
+        let fadeOut: SKAction = .fadeOut(withDuration: 1)
+        fadeOut.timingMode = .easeInEaseOut
+        
+        node.run(.sequence([
+            fadeOut,
+            .run {
+                onCompletion()
+            }
+        ]))
+    }
+    
+    internal func changeBackgroundColor() {
+        guard let colors = delegate?.getMainCircleColors() else {
+            return
+        }
+        
+        let gradientImage = UIImage.buildGradient(frame: background.frame, colors: colors)
+        let gradientTexture = SKTexture(image: gradientImage)
+        
+        background.fillColor = .white
+        background.fillTexture = gradientTexture
+    }
+    
+    internal static func buildNode() -> SKNode {
+        let newNode = SKNode()
+        newNode.zPosition = 100
+        newNode.alpha = 0
+        return newNode
     }
     
     internal func buildLabel(_ text: String, size: TextSize = .normal) -> SKLabelNode {

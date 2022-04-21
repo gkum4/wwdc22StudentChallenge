@@ -8,7 +8,7 @@
 import SpriteKit
 
 class MainCircle: Circle {
-    private var gradientColors: [CGColor] = []
+    var gradientColors: [CGColor] = []
     
     init(radius: CGFloat) {
         let circleColor = UIColor(named: "darkGray") ?? UIColor.darkGray
@@ -18,6 +18,7 @@ class MainCircle: Circle {
         node.name = Names.mainCircle
         circle.fillColor = circleColor
         circle.physicsBody?.isDynamic = false
+        gradientColors.append(circleColor.cgColor)
     }
     
     override func runChangeColorAnimation(
@@ -36,14 +37,21 @@ class MainCircle: Circle {
             return
         }
         
+        if gradientColors.count >= 3 {
+            gradientColors.removeFirst()
+        }
+        
         gradientColors.append(newColor.cgColor)
         
         guard let newCircle = circle.copy() as? SKShapeNode else {
             return
         }
         
-        newCircle.fillTexture = SKTexture(image: buildGradientImage())
+        let gradientImage = UIImage.buildGradient(frame: circle.frame, colors: gradientColors)
+        
+        newCircle.fillTexture = SKTexture(image: gradientImage)
         newCircle.alpha = 0
+        newCircle.fillColor = .white
         node.addChild(newCircle)
         
         circle.run(.sequence([
@@ -54,36 +62,13 @@ class MainCircle: Circle {
         ]))
         
         newCircle.run(.sequence([
-            .fadeIn(withDuration: duration+0.01),
+            .fadeIn(withDuration: duration),
+            .wait(forDuration: 0.01),
             .run {
                 self.circle = newCircle
                 onCompletion()
             }
         ]))
-    }
-    
-    private func buildGradientImage() -> UIImage {
-        let gradientLayer = CAGradientLayer()
-        gradientLayer.frame = circle.frame
-        gradientLayer.colors = gradientColors
-        gradientLayer.type = .radial
-        gradientLayer.startPoint = CGPoint(x: 1, y: 1)
-        gradientLayer.endPoint = CGPoint(x: 0, y: 0)
-        
-        UIGraphicsBeginImageContext(gradientLayer.bounds.size)
-        guard let currentContext = UIGraphicsGetCurrentContext() else {
-            UIGraphicsEndImageContext()
-            return UIImage()
-        }
-        gradientLayer.render(in: currentContext)
-        
-        guard let image = UIGraphicsGetImageFromCurrentImageContext() else {
-            UIGraphicsEndImageContext()
-            return UIImage()
-        }
-        
-        UIGraphicsGetCurrentContext()
-        return image
     }
     
     enum Names {

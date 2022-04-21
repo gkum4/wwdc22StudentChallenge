@@ -34,4 +34,8 @@ extension SKScene {
     func addChild(_ textOverlay: TextOverlay) {
         self.addChild(textOverlay.node)
     }
+    
+    func addChild(_ contentCamera: ContentCamera) {
+        self.addChild(contentCamera.node)
+    }
 }

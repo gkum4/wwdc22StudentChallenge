@@ -7,7 +7,7 @@
 
 import SpriteKit
 
-class ContentScene: SKScene {
+class ContentScene: SKScene, StoryProgressDelegate, TextOverlayDelegate {
     internal lazy var screenArea: CGFloat = {
         return self.frame.height * self.frame.width
     }()
@@ -17,7 +17,7 @@ class ContentScene: SKScene {
         return MainCircle(radius: mainCircleRadius)
     }()
     internal lazy var background: Background = Background(frame: self.frame)
-    internal lazy var textOverlay: TextOverlay = TextOverlay(frame: self.frame)
+    internal lazy var textOverlay: TextOverlay = TextOverlay(frame: self.frame, delegate: self)
     internal let numberOfCircles: Int = 25
     internal lazy var circleRadius: CGFloat = {
         let totalCircleArea = screenArea * 0.126
@@ -27,7 +27,13 @@ class ContentScene: SKScene {
     internal var circles: [Circle] = []
     internal var lines: [Line] = []
     var testNode: SKNode!
-    var startedTouchingNothing: Bool = false
+    internal var startedTouchingNothing: Bool = false
+    internal lazy var storyProgress: StoryProgress = StoryProgress(delegate: self)
+    internal lazy var contentCamera: ContentCamera = ContentCamera(frame: self.frame)
+    
+    func getMainCircleColors() -> [CGColor] {
+        return mainCircle.gradientColors
+    }
     
     internal func findCircle(node: SKNode) -> Circle? {
         for circle in circles {

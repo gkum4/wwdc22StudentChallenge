@@ -8,19 +8,42 @@
 import SpriteKit
 
 extension TextOverlay {
+    func nextStep(onCompletion: @escaping () -> Void = {}) {
+        switch step {
+        case 0:
+            showText1(onCompletion: onCompletion)
+        case 1:
+            showText2(onCompletion: onCompletion)
+        case 2:
+            showText3(onCompletion: onCompletion)
+        case 3:
+            showText4(onCompletion: onCompletion)
+        case 4:
+            showText5(onCompletion: onCompletion)
+        default:
+            onCompletion()
+            return
+        }
+        
+        step += 1
+    }
+    
     // People change the way you think
-    func showText1() {
+    internal func showText1(onCompletion: @escaping () -> Void = {}) {
         let label1 = buildLabel("People change the")
+        label1.name = LabelNames.peopleChangeThe
         let label1PosX = layoutMetrics.horizontalMargin + label1.frame.width/2
         label1.position = CGPoint(x: label1PosX, y: layoutMetrics.normalLineHeight/2)
-        label1.name = LabelNames.peopleChangeThe
+        label1.alpha = 0
 
         let label2 = buildLabel("way you")
+        label2.name = LabelNames.wayYou
         let label2PosX = layoutMetrics.horizontalMargin + label2.frame.width/2
         label2.position = CGPoint(x: label2PosX, y: -layoutMetrics.normalLineHeight/2)
-        label2.name = LabelNames.wayYou
+        label2.alpha = 0
 
         let label3 = buildLabel("think")
+        label3.name = LabelNames.think
         let label3PosX = (
             layoutMetrics.horizontalMargin +
             label3.frame.width/2 +
@@ -28,15 +51,24 @@ extension TextOverlay {
             layoutMetrics.spaceWidth
         )
         label3.position = CGPoint(x: label3PosX, y: -layoutMetrics.normalLineHeight/2)
-        label3.name = LabelNames.think
+        label3.alpha = 0
 
         node.addChild(label1)
         node.addChild(label2)
         node.addChild(label3)
+        
+        label1.run(.fadeIn(withDuration: 1))
+        label2.run(.fadeIn(withDuration: 1))
+        label3.run(.sequence([
+            .fadeIn(withDuration: 1),
+            .run {
+                onCompletion()
+            }
+        ]))
     }
     
     // People change the way you see things
-    func showText2() {
+    private func showText2(onCompletion: @escaping () -> Void = {}) {
         guard
             let label2 = node.children.first(where: { $0.name == LabelNames.wayYou })
                 as? SKLabelNode,
@@ -71,12 +103,15 @@ extension TextOverlay {
         
         label4.run(.sequence([
             .wait(forDuration: 0.3),
-            .fadeIn(withDuration: 1)
+            .fadeIn(withDuration: 1),
+            .run {
+                onCompletion()
+            }
         ]))
     }
     
     // Sometimes people have to leave (but that’s ok)
-    func showText3() {
+    private func showText3(onCompletion: @escaping () -> Void = {}) {
         guard
             let label1 = node.children.first(where: { $0.name == LabelNames.peopleChangeThe })
                 as? SKLabelNode,
@@ -127,11 +162,11 @@ extension TextOverlay {
         ])
         label5.run(.sequence([.wait(forDuration: 0.5), .fadeIn(withDuration: 1)]))
         label6.run(.sequence([.wait(forDuration: 0.5), .fadeIn(withDuration: 1)]))
-        label7.run(.sequence([.wait(forDuration: 2), moveAndShow]))
+        label7.run(.sequence([.wait(forDuration: 2), moveAndShow, .run({ onCompletion() })]))
     }
     
     // The more you know, the more you see  what you don’t know
-    func showText4() {
+    private func showText4(onCompletion: @escaping () -> Void = {}) {
         guard
             let label5 = node.children.first(where: { $0.name == LabelNames.sometimesPeople })
                 as? SKLabelNode,
@@ -180,12 +215,18 @@ extension TextOverlay {
         node.addChild(label9)
         node.addChild(label10)
         
-        label8.run(.sequence([.wait(forDuration: 0.5), .fadeIn(withDuration: 1)]))
-        label9.run(.sequence([.wait(forDuration: 0.7), .fadeIn(withDuration: 1)]))
-        label10.run(.sequence([.wait(forDuration: 0.9), .fadeIn(withDuration: 1)]))
+        label8.run(.sequence([.wait(forDuration: 1), .fadeIn(withDuration: 1)]))
+        label9.run(.sequence([.wait(forDuration: 1.6), .fadeIn(withDuration: 1)]))
+        label10.run(.sequence([
+            .wait(forDuration: 2.2),
+            .fadeIn(withDuration: 1),
+            .run {
+                onCompletion()
+            }
+        ]))
     }
     
-    func showText5() {
+    private func showText5(onCompletion: @escaping () -> Void = {}) {
         guard
             let label8 = node.children.first(where: { $0.name == LabelNames.theMoreYouKnow })
                 as? SKLabelNode,
@@ -225,11 +266,14 @@ extension TextOverlay {
         
         node.addChild(groupNode)
         groupNode.run(.sequence([
-            .wait(forDuration: 0.5),
+            .wait(forDuration: 1),
             .group([
                 .scale(to: 1, duration: 1),
                 .fadeIn(withDuration: 1)
-            ])
+            ]),
+            .run {
+                onCompletion()
+            }
         ]))
     }
 }
