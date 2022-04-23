@@ -16,13 +16,6 @@ extension SKScene {
         self.addChild(circle.node)
     }
     
-    func addChild(_ walls: Walls) {
-        self.addChild(walls.topNode)
-        self.addChild(walls.bottomNode)
-        self.addChild(walls.leftNode)
-        self.addChild(walls.rightNode)
-    }
-    
     func addChild(_ line: Line) {
         self.addChild(line.node)
     }
@@ -37,5 +30,9 @@ extension SKScene {
     
     func addChild(_ contentCamera: ContentCamera) {
         self.addChild(contentCamera.node)
+    }
+    
+    func addChild(_ tips: Tips) {
+        self.addChild(tips.node)
     }
 }

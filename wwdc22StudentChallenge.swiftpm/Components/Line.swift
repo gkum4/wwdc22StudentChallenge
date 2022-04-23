@@ -17,6 +17,7 @@ class Line {
     var completedAnimation: Bool = false
     var completeAnimationCallback: () -> Void = {}
     var isPaused: Bool = false
+    static let normalWidth: CGFloat = 3
     
     init(
         anchorCircleA: Circle,
@@ -67,14 +68,14 @@ class Line {
         ]))
     }
     
-    func removeWithAnimation(completeAnimationCallback: @escaping () -> Void = {}) {
+    func removeWithAnimation(onCompletion: @escaping () -> Void = {}) {
         isPaused = true
         
         node.run(.sequence([
             .fadeOut(withDuration: 1),
             .run {
                 self.node.removeFromParent()
-                completeAnimationCallback()
+                onCompletion()
             }
         ]))
     }
@@ -107,7 +108,6 @@ class Line {
                 return
             }
         }
-        
         setLinePath(posA: anchorAPos, posB: endPos)
     }
     
@@ -118,7 +118,7 @@ class Line {
     ) -> SKShapeNode {
         let line = SKShapeNode()
         line.strokeColor = color
-        line.lineWidth = 5
+        line.lineWidth = Line.normalWidth
         line.path = CGMutablePath()
         line.zPosition = 5
         return line

@@ -13,22 +13,25 @@ extension ContentScene {
     }
     
     private func setupScene() {
-//        self.addChild(Walls(frame: self.frame))
         self.addChild(mainCircle)
         placeCircles()
-        self.addChild(background)
-        self.addChild(textOverlay)
         self.addChild(contentCamera)
         self.camera = contentCamera.node
+        contentCamera.addChild(textOverlay)
+        contentCamera.node.setScale(0.8)
+        self.addChild(background)
+        contentCamera.node.addChild(tips.node)
+        
+        tips.showConnect()
     }
     
     private func placeCircles() {
-        let screenXRange = (-self.size.width/2 + 10)...(self.size.width/2 - 10)
-        let screenYRange = (-self.size.height/2 + 10)...(self.size.height/2 - 10)
+        let screenXRange = (-self.size.width + 10)...(self.size.width - 10)
+        let screenYRange = (-self.size.height + 10)...(self.size.height - 10)
         let color = ColorSequence.shared.actualColor
         
-        for _ in 1...numberOfCircles {
-            let radius = circleRadius * CGFloat.random(in: 0.5...1)
+        for _ in 1...(numberOfCircles * 3) {
+            let radius = CGFloat.random(in: minCircleRadius...circleRadius)
             
             let circle = Circle(radius: radius, color: color, animated: true)
             circle.node.position = getUsusedPositionToPlaceCircle(
@@ -50,7 +53,10 @@ extension ContentScene {
             yRange: yRange
         )
         
-        while !checkHasMinimunDistanceFromCircles(atPos: newPosition, dist: 120) {
+        while !(
+            checkHasMinimunDistanceFromMainCircle(atPos: newPosition) &&
+            checkHasMinimunDistanceFromCircles(atPos: newPosition, dist: circleRadius*4)
+        ) {
             newPosition = PositionUtils.getRandomPosition(
                 xRange: xRange,
                 yRange: yRange
@@ -68,9 +74,19 @@ extension ContentScene {
             
             let distance = PositionUtils.getDistance(pointA: node.position, pointB: pos)
             
-            if distance <= dist {
+            if distance < dist {
                 return false
             }
+        }
+        
+        return true
+    }
+    
+    private func checkHasMinimunDistanceFromMainCircle(atPos pos: CGPoint) -> Bool {
+        let distance = PositionUtils.getDistance(pointA: pos, pointB: mainCircle.node.position)
+        
+        if distance < mainCircleRadius*1.5 {
+            return false
         }
         
         return true

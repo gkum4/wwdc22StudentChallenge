@@ -37,7 +37,7 @@ class MainCircle: Circle {
             return
         }
         
-        if gradientColors.count >= 3 {
+        if gradientColors.count >= 4 {
             gradientColors.removeFirst()
         }
         

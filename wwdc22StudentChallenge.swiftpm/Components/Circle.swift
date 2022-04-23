@@ -6,37 +6,54 @@
 //
 
 import SpriteKit
+import CoreGraphics
 
 class Circle {
     let node: SKNode
     var circle: SKShapeNode
+    var radius: CGFloat
     var hasLineAttached: Bool = false
+    var isConnectedToMainCircle: Bool = false
+    var connectedCircles: [Circle] = []
     
     init(radius: CGFloat, color: UIColor, animated: Bool) {
         self.node = SKNode()
         self.node.name = Names.circle
+        self.radius = radius
         self.circle = Circle.buildCircle(radius: radius, color: color)
         self.node.addChild(self.circle)
         
         if animated {
-            self.node.run(Circle.buildMovingAnimation(), withKey: ActionKeys.movingAnimation)
+            self.node.run(Circle.buildAliveAnimation(), withKey: ActionKeys.aliveAnimation)
         }
     }
     
-    func pauseMovingAnimation() {
-        guard let movingAnimation = self.node.action(forKey: ActionKeys.movingAnimation) else {
-            return
+    func pauseMovement() {
+        if let aliveAnimation = self.node.action(forKey: ActionKeys.aliveAnimation) {
+            aliveAnimation.speed = 0
         }
         
-        movingAnimation.speed = 0
+        if let moveAwayAnimation = self.node.action(forKey: ActionKeys.moveAwayAnimation) {
+            moveAwayAnimation.speed = 0
+        }
+        
+        if let moveCloserAnimation = self.node.action(forKey: ActionKeys.moveCloserAnimation) {
+            moveCloserAnimation.speed = 0
+        }
     }
     
-    func continueMovingAnimation() {
-        guard let movingAnimation = self.node.action(forKey: ActionKeys.movingAnimation) else {
-            return
+    func resumeMovement() {
+        if let aliveAnimation = self.node.action(forKey: ActionKeys.aliveAnimation) {
+            aliveAnimation.speed = 1
         }
         
-        movingAnimation.speed = 1
+        if let moveAwayAnimation = self.node.action(forKey: ActionKeys.moveAwayAnimation) {
+            moveAwayAnimation.speed = 1
+        }
+        
+        if let moveCloserAnimation = self.node.action(forKey: ActionKeys.moveCloserAnimation) {
+            moveCloserAnimation.speed = 1
+        }
     }
     
     func runChangeColorAnimation(
@@ -68,7 +85,7 @@ class Circle {
         ]))
     }
     
-    func runMoveAwayAnimation(completeAnimationCallback: @escaping () -> Void = {}) {
+    func runMoveAwayAnimation(onCompletion: @escaping () -> Void = {}) {
         let position = node.position
         let absPosX = abs(position.x)
         let absPosY = abs(position.y)
@@ -99,9 +116,68 @@ class Circle {
         self.node.run(.sequence([
             moveAction,
             .run {
-                completeAnimationCallback()
+                onCompletion()
             }
-        ]))
+        ]), withKey: ActionKeys.moveAwayAnimation)
+    }
+    
+    func runMoveCloserAnimation(onCompletion: @escaping () -> Void = {}) {
+        let position = node.position
+        let absPosX = abs(position.x)
+        let absPosY = abs(position.y)
+        var xMultiplier: CGFloat = 0
+        var yMultiplier: CGFloat = 0
+        
+        if absPosX > absPosY {
+            xMultiplier = position.x > 0 ? -1 : 1
+            yMultiplier = (absPosY / absPosX) * (position.y > 0 ? -1 : 1)
+        }
+        
+        if absPosX < absPosY {
+            xMultiplier = (absPosX / absPosY) * (position.x > 0 ? -1 : 1)
+            yMultiplier = position.y > 0 ? -1 : 1
+        }
+        
+        if absPosX == absPosY {
+            xMultiplier = position.x > 0 ? -1 : 1
+            yMultiplier = position.y > 0 ? -1 : 1
+        }
+        
+        let moveAction: SKAction = .move(
+            by: CGVector(dx: 20 * xMultiplier, dy: 20 * yMultiplier),
+            duration: 1
+        )
+        moveAction.timingMode = .easeInEaseOut
+        
+        self.node.run(.sequence([
+            moveAction,
+            .run {
+                onCompletion()
+            }
+        ]), withKey: ActionKeys.moveCloserAnimation)
+    }
+    
+    static func checkIfIsConnectedToMainCircle(
+        _ circle: Circle,
+        calledBy circleWhoCalled: Circle? = nil
+    ) -> Bool {
+        if circle.node.name == MainCircle.Names.mainCircle {
+            return true
+        }
+        
+        var responses: [Bool] = []
+        
+        for connectedCircle in circle.connectedCircles {
+            if let circleWhoIsCalling = circleWhoCalled {
+                if connectedCircle.node == circleWhoIsCalling.node {
+                    continue
+                }
+            }
+            
+            responses.append(Circle.checkIfIsConnectedToMainCircle(connectedCircle, calledBy: circle))
+        }
+        
+        return responses.first(where: { $0 == true }) == nil ? false : true
     }
     
     static private func buildCircle(radius: CGFloat, color: UIColor) -> SKShapeNode {
@@ -119,7 +195,7 @@ class Circle {
         return newCircle
     }
     
-    static private func buildMovingAnimation() -> SKAction {
+    static private func buildAliveAnimation() -> SKAction {
         var circleAnimationSequence: [SKAction] = []
         var goBackVector = CGVector()
         
@@ -137,14 +213,27 @@ class Circle {
             goBackVector.dy -= randomVector.dy
             
             if i == 3 {
-                circleAnimationSequence.append(
-                    .move(by: goBackVector, duration: TimeInterval.random(in: 1...2))
+                let moveAnimation: SKAction = .move(
+                    by: goBackVector,
+                    duration: TimeInterval.random(in: 1...2)
                 )
+                moveAnimation.timingMode = .easeInEaseOut
+                
+                circleAnimationSequence.append(moveAnimation)
             }
         }
         
-        let animation: SKAction = .repeatForever(.sequence(circleAnimationSequence))
-        animation.timingMode = .easeInEaseOut
+        let scaleAnimation: SKAction = .sequence([
+            .wait(forDuration: TimeInterval.random(in: 0...0.5)),
+            .scale(to: 0.95, duration: 0.7),
+            .scale(to: 1, duration: 0.7),
+        ])
+        scaleAnimation.timingMode = .easeInEaseOut
+        
+        let animation: SKAction = .repeatForever(.group([
+            .sequence(circleAnimationSequence),
+            scaleAnimation
+        ]))
         return animation
     }
     
@@ -153,6 +242,8 @@ class Circle {
     }
     
     enum ActionKeys {
-        static let movingAnimation: String = "movingAnimation"
+        static let aliveAnimation: String = "aliveAnimation"
+        static let moveAwayAnimation: String = "moveAwayAnimation"
+        static let moveCloserAnimation: String = "moveCloserAnimation"
     }
 }

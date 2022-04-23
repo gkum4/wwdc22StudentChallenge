@@ -11,28 +11,45 @@ class ContentScene: SKScene, StoryProgressDelegate, TextOverlayDelegate {
     internal lazy var screenArea: CGFloat = {
         return self.frame.height * self.frame.width
     }()
-    internal lazy var mainCircle: MainCircle = {
-        let mainCircleArea = screenArea * 0.023
-        let mainCircleRadius = sqrt(mainCircleArea / CGFloat.pi)
-        return MainCircle(radius: mainCircleRadius)
-    }()
-    internal lazy var background: Background = Background(frame: self.frame)
-    internal lazy var textOverlay: TextOverlay = TextOverlay(frame: self.frame, delegate: self)
     internal let numberOfCircles: Int = 25
     internal lazy var circleRadius: CGFloat = {
-        let totalCircleArea = screenArea * 0.126
+        let totalCircleArea = screenArea * 0.15
         let circleArea = totalCircleArea / CGFloat(numberOfCircles)
         return sqrt(circleArea / CGFloat.pi)
     }()
+    internal lazy var minCircleRadius: CGFloat = circleRadius * 0.4
+    internal lazy var mainCircleRadius: CGFloat = {
+        let mainCircleArea = screenArea * 0.025
+        return sqrt(mainCircleArea / CGFloat.pi)
+    }()
+    internal lazy var mainCircle: MainCircle = MainCircle(radius: mainCircleRadius)
+    internal lazy var background: Background = Background(frame: self.frame)
+    internal lazy var textOverlay: TextOverlay = TextOverlay(frame: self.frame, delegate: self)
+    internal lazy var contentCamera: ContentCamera = ContentCamera(frame: self.frame)
+    internal lazy var storyProgress: StoryProgress = StoryProgress(delegate: self, tips: tips)
+    internal lazy var tips: Tips = Tips(frame: self.frame)
     internal var circles: [Circle] = []
     internal var lines: [Line] = []
-    var testNode: SKNode!
-    internal var startedTouchingNothing: Bool = false
-    internal lazy var storyProgress: StoryProgress = StoryProgress(delegate: self)
-    internal lazy var contentCamera: ContentCamera = ContentCamera(frame: self.frame)
+    internal var touchedNode: SKNode?
+    internal var showingText: Bool = false
     
     func getMainCircleColors() -> [CGColor] {
         return mainCircle.gradientColors
+    }
+    
+    func showText(onCompletion: @escaping () -> Void = {}) {
+        showingText = true
+        
+        textOverlay.show(onCompletion: {
+            self.textOverlay.nextStep(onCompletion: {
+                self.textOverlay.wait(forDuration: 1, onCompletion: {
+                    self.showingText = false
+                    self.textOverlay.hide(onCompletion: {
+                        onCompletion()
+                    })
+                })
+            })
+        })
     }
     
     internal func findCircle(node: SKNode) -> Circle? {

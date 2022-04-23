@@ -253,7 +253,7 @@ extension TextOverlay {
         let label11PosX = layoutMetrics.horizontalMargin + label11.frame.width/2
         label11.position = CGPoint(x: label11PosX, y: layoutMetrics.normalLineHeight/2)
         
-        let label12 = buildLabel("just keep exploring!")
+        let label12 = buildLabel("just keep connecting!")
         label12.name = LabelNames.justKeep
         let label12PosX = layoutMetrics.horizontalMargin + label12.frame.width/2
         label12.position = CGPoint(x: label12PosX, y: -layoutMetrics.normalLineHeight/2)

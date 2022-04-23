@@ -9,10 +9,16 @@ import SpriteKit
 
 extension ContentScene {
     internal func touchDown(atPoint pos: CGPoint) {
-        guard let nodeTouched = getTouchedNode(atPos: pos) else {
-            startedTouchingNothing = true
+        if showingText {
             return
         }
+        
+        guard let nodeTouched = getTouchedNode(atPos: pos) else {
+            touchedNode = nil
+            return
+        }
+        
+        touchedNode = nodeTouched
 
         if nodeTouched.name == Circle.Names.circle {
             onTouchCircle(nodeTouched: nodeTouched)
@@ -24,7 +30,46 @@ extension ContentScene {
             return
         }
 
-        startedTouchingNothing = true
+        touchedNode = nil
+    }
+    
+    internal func touchMoved(toPoint pos: CGPoint) {
+        if showingText {
+            return
+        }
+        
+        if touchedNode == nil && storyProgress.canCutConnectionLine {
+            if checkIfIsTouchingAnyCircle(atPos: pos) {
+                return
+            }
+            
+            guard let (touchedLine, touchedLineIndex) = getLineWhileTouchMoving(atPos: pos) else {
+                return
+            }
+            
+//            background.runSpreadAnimation(color: UIColor(cgColor: mainCircle.gradientColors[0]), atPos: pos)
+            cutConnection(
+                touchedLine: touchedLine,
+                touchedLineIndex: touchedLineIndex,
+                onCompletion: self.storyProgress.cutConnectionLine
+            )
+        }
+        
+        if touchedNode == mainCircle.node && storyProgress.canZoomInOrZoomOut {
+            zoomCamera(touchedPos: pos)
+        }
+    }
+    
+    internal func touchUp(atPoint pos: CGPoint) {
+        touchedNode = nil
+        
+        if contentCamera.isZoomingIn || contentCamera.isZoomingOut {
+            if contentCamera.isZoomingOut {
+                storyProgress.zoomedOut()
+            }
+            
+            contentCamera.stopedZooming()
+        }
     }
     
     private func onTouchCircle(nodeTouched: SKNode) {
@@ -36,17 +81,21 @@ extension ContentScene {
             return
         }
         
-        if circleTouched.hasLineAttached && storyProgress.canTapOnConnection {
-            background.runSpreadAnimation(
-                color: circleTouched.circle.fillColor,
-                atPos: circleTouched.node.position,
-                onCompletion: storyProgress.tappedOnConnection
-            )
+        if circleTouched.hasLineAttached {
+            if storyProgress.canTapOnConnection {
+                background.runHugeSpreadAnimation(
+                    colors: mainCircle.gradientColors,
+                    atPos: circleTouched.node.position,
+                    onCompletion: {
+                        self.storyProgress.tappedOnConnection()
+                    }
+                )
+            }
             return
         }
         circleTouched.hasLineAttached = true
         
-        drawLine(circleA: mainCircle, circleB: circleTouched, onCompletion: {
+        connectCircle(circleTouched, onCompletion: {
             self.storyProgress.createdConnection()
         })
     }
@@ -56,26 +105,10 @@ extension ContentScene {
             return
         }
         
-//        guard let mainCircleTexture = mainCircle.circle.fillTexture else {
-//            return
-//        }
-        
-        background.runSpreadAnimation(
-            colors: mainCircle.gradientColors
-        )
-        
-        testNode = nodeTouched
+        touchedNode = mainCircle.node
     }
     
-    func showText() {
-        textOverlay.show(onCompletion: {
-            self.textOverlay.nextStep(onCompletion: {
-                self.textOverlay.wait(forDuration: 1, onCompletion: {
-                    self.textOverlay.hide()
-                })
-            })
-        })
-    }
+    
     
     private func getTouchedNode(atPos pos: CGPoint) -> SKNode? {
         for node in self.children {
@@ -87,30 +120,128 @@ extension ContentScene {
         return nil
     }
     
-    private func drawLine(
-        circleA: Circle,
-        circleB: Circle,
+    private func connectCircle(
+        _ circle: Circle,
         onCompletion: @escaping () -> Void = {}
     ) {
-        circleA.pauseMovingAnimation()
-        circleB.pauseMovingAnimation()
+        let circleIsInMainFrame = checkIfCircleIsInMainFrame(circle)
+        if circleIsInMainFrame {
+            drawLine(from: mainCircle, to: circle, onCompletion: {
+                onCompletion()
+            })
+            return
+        }
+        
+        let nearestCircle = findNearestConnectedCircle(from: circle)
+        
+        if nearestCircle is MainCircle {
+            drawLine(from: nearestCircle, to: circle, onCompletion: {
+                nearestCircle.connectedCircles.append(circle)
+                circle.connectedCircles.append(nearestCircle)
+                
+                onCompletion()
+            })
+        } else {
+            drawLine(from: nearestCircle, to: circle, onCompletion: {
+                nearestCircle.connectedCircles.append(circle)
+                circle.connectedCircles.append(nearestCircle)
+                
+                self.drawLine(from: circle, to: self.mainCircle, onCompletion: {
+                    self.storyProgress.createdDistantConection()
+                    onCompletion()
+                })
+            })
+        }
+    }
+    
+    private func findNearestConnectedCircle(from circle: Circle) -> Circle {
+        let circlePos = circle.node.position
+        
+        var nearestCircle: Circle = mainCircle
+        var nearestCircleDistance: CGFloat = PositionUtils.getDistance(
+            pointA: mainCircle.node.position,
+            pointB: circlePos
+        )
+        
+        for otherCircle in circles {
+            let alreadyConnectedToCircle = circle.connectedCircles.first(where: {
+                return $0.node == otherCircle.node
+            }) == nil ? false : true
+            
+            if !otherCircle.hasLineAttached || otherCircle.node == circle.node || alreadyConnectedToCircle {
+                continue
+            }
+            
+            let distance = PositionUtils.getDistance(
+                pointA: otherCircle.node.position,
+                pointB: circlePos
+            )
+            
+            if distance < nearestCircleDistance {
+                nearestCircle = otherCircle
+                nearestCircleDistance = distance
+            }
+        }
+        
+        return nearestCircle
+    }
+    
+    private func checkIfCircleIsInMainFrame(_ circle: Circle) -> Bool {
+        let maxX = self.frame.width/3
+        let maxY = self.frame.height/3
+        let maxDistance = PositionUtils.getDistance(
+            pointA: .zero,
+            pointB: CGPoint(x: maxX, y: maxY)
+        )
+        
+        let circleDistanceFromCenter = PositionUtils.getDistance(
+            pointA: .zero,
+            pointB: circle.node.position
+        )
+        
+        return circleDistanceFromCenter < (maxDistance + circleRadius)
+    }
+    
+    private func drawLine(
+        from circleOrigin: Circle,
+        to circleDest: Circle,
+        onCompletion: @escaping () -> Void = {}
+    ) {
+        circleOrigin.pauseMovement()
+        circleDest.pauseMovement()
         
         let lineColor = ColorSequence.shared.actualColor
         ColorSequence.shared.next()
         let newColor = ColorSequence.shared.actualColor
         
         let line = Line(
-            anchorCircleA: circleA,
-            anchorCircleB: circleB,
+            anchorCircleA: circleOrigin,
+            anchorCircleB: circleDest,
             color: lineColor
         )
         line.completeAnimationCallback = {
-            self.background.runSpreadAnimation(color: newColor)
+            self.background.runSpreadAnimation(color: newColor, atPos: circleDest.node.position)
+            
             line.runChangeColorAnimation(to: newColor, withDuration: 1)
-            circleA.runChangeColorAnimation(to: newColor, withDuration: 1)
-            circleB.runChangeColorAnimation(to: newColor, withDuration: 1, onCompletion: {
-                circleA.continueMovingAnimation()
-                circleB.continueMovingAnimation()
+            
+            if !(circleOrigin is MainCircle) && !(circleDest is MainCircle) {
+                self.mainCircle.runChangeColorAnimation(to: newColor, withDuration: 1)
+            }
+            
+            circleOrigin.runChangeColorAnimation(to: newColor, withDuration: 1)
+            
+            circleDest.runChangeColorAnimation(to: newColor, withDuration: 1, onCompletion: {
+                circleOrigin.resumeMovement()
+                circleDest.resumeMovement()
+                
+                if circleOrigin is MainCircle {
+                    circleDest.runMoveCloserAnimation()
+                }
+                
+                if circleDest is MainCircle {
+                    circleOrigin.runMoveCloserAnimation()
+                }
+                
                 onCompletion()
             })
         }
@@ -119,23 +250,11 @@ extension ContentScene {
         self.addChild(line)
     }
     
-    internal func touchMoved(toPoint pos: CGPoint) {
-        if testNode != nil {
-            testNode.position = pos
-        }
-        
-        if startedTouchingNothing && storyProgress.canCutConnectionLine {
-            if checkIfIsTouchingAnyCircle(atPos: pos) {
-                return
-            }
-            
-            guard let (touchedLine, touchedLineIndex) = getLineWhileTouchMoving(atPos: pos) else {
-                return
-            }
-            
-            cutLine(touchedLine: touchedLine, touchedLineIndex: touchedLineIndex, onCompletion: {
-                self.storyProgress.cutConnectionLine()
-            })
+    private func zoomCamera(touchedPos pos: CGPoint) {
+        if pos.y > 0 {
+            contentCamera.zoomOut(valueY: pos.y)
+        } else {
+            contentCamera.zoomIn(valueY: pos.y)
         }
     }
     
@@ -153,7 +272,7 @@ extension ContentScene {
         return false
     }
     
-    private func cutLine(
+    private func cutConnection(
         touchedLine: Line,
         touchedLineIndex: Int,
         onCompletion: @escaping () -> Void = {}
@@ -165,22 +284,24 @@ extension ContentScene {
         let anchorCircleA = touchedLine.anchorCircleA
         let anchorCircleB = touchedLine.anchorCircleB
         
-        anchorCircleA.pauseMovingAnimation()
-        anchorCircleB.pauseMovingAnimation()
-        touchedLine.removeWithAnimation(completeAnimationCallback: {
+        anchorCircleA.pauseMovement()
+        anchorCircleB.pauseMovement()
+        touchedLine.removeWithAnimation(onCompletion: {
+            anchorCircleA.connectedCircles.removeAll(where: { $0.node == anchorCircleB.node })
+            anchorCircleB.connectedCircles.removeAll(where: { $0.node == anchorCircleA.node })
             anchorCircleA.hasLineAttached = false
             anchorCircleB.hasLineAttached = false
             
             if !(anchorCircleA is MainCircle) {
-                anchorCircleA.runMoveAwayAnimation(completeAnimationCallback: {
-                    anchorCircleA.continueMovingAnimation()
+                anchorCircleA.runMoveAwayAnimation(onCompletion: {
+                    anchorCircleA.resumeMovement()
                     onCompletion()
                 })
             }
             
             if !(anchorCircleB is MainCircle) {
-                anchorCircleB.runMoveAwayAnimation(completeAnimationCallback: {
-                    anchorCircleB.continueMovingAnimation()
+                anchorCircleB.runMoveAwayAnimation(onCompletion: {
+                    anchorCircleB.resumeMovement()
                     onCompletion()
                 })
             }
@@ -199,8 +320,5 @@ extension ContentScene {
         return nil
     }
     
-    internal func touchUp(atPoint pos: CGPoint) {
-        testNode = nil
-        startedTouchingNothing = false
-    }
+    
 }

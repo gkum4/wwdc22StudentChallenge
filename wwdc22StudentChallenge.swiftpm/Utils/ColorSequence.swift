@@ -12,7 +12,7 @@ class ColorSequence {
     
     var actualColor: UIColor
     private var actualColorIndex: Int = 0
-    private let colorSequence: [UIColor] = [
+    var colors: [UIColor] = [
         UIColor(named: "gray") ?? UIColor.gray,
         UIColor(named: "purpleish") ?? UIColor.gray,
         UIColor(named: "redish") ?? UIColor.gray,
@@ -24,16 +24,16 @@ class ColorSequence {
     ]
     
     private init() {
-        actualColor = colorSequence[actualColorIndex]
+        actualColor = colors[actualColorIndex]
     }
     
     func next() {
-        if actualColorIndex < colorSequence.count-1 {
+        if actualColorIndex < colors.count-1 {
             actualColorIndex += 1
-            actualColor = colorSequence[actualColorIndex]
+            actualColor = colors[actualColorIndex]
             return
         }
         
-        actualColor = colorSequence[Int.random(in: 0...(colorSequence.count-1))]
+        actualColor = colors[Int.random(in: 0...(colors.count-1))]
     }
 }
