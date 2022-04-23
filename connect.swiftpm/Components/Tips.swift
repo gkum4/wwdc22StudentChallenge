@@ -58,7 +58,29 @@ class Tips {
         let newTooltip = getZoomTooltip()
         newTooltip.node.alpha = 0
         
-        showNewTip(newLabel: newLabel, newTooltip: newTooltip)
+        node.run(.fadeIn(withDuration: 0.5))
+        newTooltip.tooltip.anchorPoint = .init(x: 0, y: 1)
+        newTooltip.node.position.y += sceneFrame.height/2 - LayoutMetrics.regularFontSize*2
+        
+        label.removeFromParent()
+        tooltip.node.removeFromParent()
+        
+        node.addChild(newLabel)
+        node.addChild(newTooltip.node)
+        
+        newLabel.run(.sequence([
+            .fadeIn(withDuration: 0.51),
+            .run {
+                self.label = newLabel
+            }
+        ]))
+        
+        newTooltip.node.run(.sequence([
+            .fadeIn(withDuration: 0.51),
+            .run {
+                self.tooltip = newTooltip
+            }
+        ]))
     }
     
     func showConnectDistant() {
@@ -94,6 +116,7 @@ class Tips {
         
         let totalWidth = labelWidth + tooltipWidth
         
+        newTooltip.tooltip.anchorPoint = .init(x: 0.5, y: 0.5)
         newLabel.position.x = labelWidth/2 - totalWidth/2
         newTooltip.node.position.y += LayoutMetrics.regularFontSize/2
         newTooltip.node.position.x = totalWidth/2 + tooltipWidth/2 - LayoutMetrics.regularFontSize/2

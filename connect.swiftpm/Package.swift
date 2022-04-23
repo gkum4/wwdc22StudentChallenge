@@ -8,15 +8,15 @@ import PackageDescription
 import AppleProductTypes
 
 let package = Package(
-    name: "wwdc22StudentChallenge",
+    name: "Connect",
     platforms: [
         .iOS("15.2")
     ],
     products: [
         .iOSApplication(
-            name: "wwdc22StudentChallenge",
+            name: "Connect",
             targets: ["AppModule"],
-            bundleIdentifier: "com.kuma.PlaygroundsAppTests",
+            bundleIdentifier: "com.kuma.Connect",
             teamIdentifier: "L5C36X97NN",
             displayVersion: "1.0",
             bundleVersion: "1",

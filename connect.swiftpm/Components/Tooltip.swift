@@ -85,10 +85,10 @@ class Tooltip {
         
         let slideAnimation: SKAction = .sequence([
             .fadeIn(withDuration: 0.5),
-            .move(by: CGVector(dx: 0, dy: frame.height * 0.2), duration: 0.7),
+            .move(by: CGVector(dx: 0, dy: frame.height * 0.25), duration: 0.7),
             .fadeOut(withDuration: 0.5),
             .run {
-                newTooltip.position.y -= frame.height * 0.2
+                newTooltip.position.y -= frame.height * 0.25
             }
         ])
         slideAnimation.timingMode = .easeInEaseOut
