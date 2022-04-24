@@ -1,12 +1,11 @@
 //
-//  File.swift
-//  PlaygroundsAppTests
+//  Circle.swift
+//  Connect
 //
 //  Created by Gustavo Kumasawa on 12/04/22.
 //
 
 import SpriteKit
-import CoreGraphics
 
 class Circle {
     let node: SKNode
@@ -155,29 +154,6 @@ class Circle {
                 onCompletion()
             }
         ]), withKey: ActionKeys.moveCloserAnimation)
-    }
-    
-    static func checkIfIsConnectedToMainCircle(
-        _ circle: Circle,
-        calledBy circleWhoCalled: Circle? = nil
-    ) -> Bool {
-        if circle.node.name == MainCircle.Names.mainCircle {
-            return true
-        }
-        
-        var responses: [Bool] = []
-        
-        for connectedCircle in circle.connectedCircles {
-            if let circleWhoIsCalling = circleWhoCalled {
-                if connectedCircle.node == circleWhoIsCalling.node {
-                    continue
-                }
-            }
-            
-            responses.append(Circle.checkIfIsConnectedToMainCircle(connectedCircle, calledBy: circle))
-        }
-        
-        return responses.first(where: { $0 == true }) == nil ? false : true
     }
     
     static private func buildCircle(radius: CGFloat, color: UIColor) -> SKShapeNode {

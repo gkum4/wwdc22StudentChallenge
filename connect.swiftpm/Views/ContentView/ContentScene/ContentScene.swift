@@ -1,6 +1,6 @@
 //
-//  GameScene.swift
-//  PlaygroundsAppTests
+//  ContentScene.swift
+//  Connect
 //
 //  Created by Gustavo Kumasawa on 11/04/22.
 //

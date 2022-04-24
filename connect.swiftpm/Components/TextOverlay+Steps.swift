@@ -1,6 +1,6 @@
 //
 //  TextOverlay+Steps.swift
-//  wwdc22StudentChallenge
+//  Connect
 //
 //  Created by Gustavo Kumasawa on 17/04/22.
 //

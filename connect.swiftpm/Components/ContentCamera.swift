@@ -1,6 +1,6 @@
 //
-//  Camera.swift
-//  wwdc22StudentChallenge
+//  ContentCamera.swift
+//  Connect
 //
 //  Created by Gustavo Kumasawa on 19/04/22.
 //

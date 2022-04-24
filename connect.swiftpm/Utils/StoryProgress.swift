@@ -1,6 +1,6 @@
 //
 //  StoryProgress.swift
-//  wwdc22StudentChallenge
+//  Connect
 //
 //  Created by Gustavo Kumasawa on 18/04/22.
 //

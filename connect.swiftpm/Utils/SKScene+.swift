@@ -1,6 +1,6 @@
 //
 //  SKScene+.swift
-//  PlaygroundsAppTests
+//  Connect
 //
 //  Created by Gustavo Kumasawa on 12/04/22.
 //

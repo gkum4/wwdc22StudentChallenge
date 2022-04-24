@@ -1,6 +1,6 @@
 //
 //  MainCircle.swift
-//  PlaygroundsAppTests
+//  Connect
 //
 //  Created by Gustavo Kumasawa on 13/04/22.
 //

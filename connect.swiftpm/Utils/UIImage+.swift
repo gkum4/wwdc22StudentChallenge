@@ -1,6 +1,6 @@
 //
 //  UIImage+.swift
-//  wwdc22StudentChallenge
+//  Connect
 //
 //  Created by Gustavo Kumasawa on 19/04/22.
 //

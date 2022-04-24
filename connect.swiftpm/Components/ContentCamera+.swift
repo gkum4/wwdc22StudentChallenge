@@ -1,6 +1,6 @@
 //
-//  File.swift
-//  
+//  ContentCamera+.swift
+//  Connect
 //
 //  Created by Gustavo Kumasawa on 20/04/22.
 //

@@ -1,6 +1,6 @@
 //
 //  TextOverlay.swift
-//  PlaygroundsAppTests
+//  Connect
 //
 //  Created by Gustavo Kumasawa on 16/04/22.
 //
