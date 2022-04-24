@@ -6,6 +6,7 @@
 //
 
 import SpriteKit
+import AVFoundation
 
 extension ContentScene {
     override func didMove(to view: SKView) {
@@ -23,6 +24,8 @@ extension ContentScene {
         contentCamera.node.addChild(tips.node)
         
         tips.showConnect()
+        
+        setupAudioPlayers()
     }
     
     private func placeCircles() {
@@ -90,6 +93,18 @@ extension ContentScene {
         }
         
         return true
+    }
+    
+    private func setupAudioPlayers() {
+        let zoomInAudioURL = Bundle.main.url(forResource: "zoomIn", withExtension: "mp3")!
+        zoomInSoundPlayer = try! AVAudioPlayer(contentsOf: zoomInAudioURL)
+        zoomInSoundPlayer?.prepareToPlay()
+        zoomInSoundPlayer?.volume = 1
+        
+        let zoomOutAudioURL = Bundle.main.url(forResource: "zoomOut", withExtension: "mp3")!
+        zoomOutSoundPlayer = try! AVAudioPlayer(contentsOf: zoomOutAudioURL)
+        zoomOutSoundPlayer?.prepareToPlay()
+        zoomOutSoundPlayer?.volume = 1
     }
 }
 

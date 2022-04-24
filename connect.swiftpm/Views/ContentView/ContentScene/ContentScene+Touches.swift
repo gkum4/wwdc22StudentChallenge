@@ -6,6 +6,7 @@
 //
 
 import SpriteKit
+import AVKit
 
 extension ContentScene {
     internal func touchDown(atPoint pos: CGPoint) {
@@ -47,7 +48,7 @@ extension ContentScene {
                 return
             }
             
-//            background.runSpreadAnimation(color: UIColor(cgColor: mainCircle.gradientColors[0]), atPos: pos)
+            playCutSound()
             cutConnection(
                 touchedLine: touchedLine,
                 touchedLineIndex: touchedLineIndex,
@@ -62,8 +63,11 @@ extension ContentScene {
     
     internal func touchUp(atPoint pos: CGPoint) {
         touchedNode = nil
+        stopZoomInSound()
+        stopZoomOutSound()
         
         if contentCamera.isZoomingIn || contentCamera.isZoomingOut {
+            
             if contentCamera.isZoomingOut {
                 storyProgress.zoomedOut()
             }
@@ -83,6 +87,8 @@ extension ContentScene {
         
         if circleTouched.hasLineAttached {
             if storyProgress.canTapOnConnection {
+                playTapSound()
+                
                 background.runHugeSpreadAnimation(
                     colors: mainCircle.gradientColors,
                     atPos: circleTouched.node.position,
@@ -108,8 +114,6 @@ extension ContentScene {
         touchedNode = mainCircle.node
     }
     
-    
-    
     private func getTouchedNode(atPos pos: CGPoint) -> SKNode? {
         for node in self.children {
             if node.contains(pos) {
@@ -124,9 +128,9 @@ extension ContentScene {
         _ circle: Circle,
         onCompletion: @escaping () -> Void = {}
     ) {
-        let circleIsInMainFrame = checkIfCircleIsInMainFrame(circle)
-        if circleIsInMainFrame {
+        if checkIfCircleIsInMainFrame(circle) {
             drawLine(from: mainCircle, to: circle, onCompletion: {
+                self.playConnectionSound()
                 onCompletion()
             })
             return
@@ -136,6 +140,7 @@ extension ContentScene {
         
         if nearestCircle is MainCircle {
             drawLine(from: nearestCircle, to: circle, onCompletion: {
+                self.playDistantConnectionSound()
                 nearestCircle.connectedCircles.append(circle)
                 circle.connectedCircles.append(nearestCircle)
                 
@@ -143,6 +148,7 @@ extension ContentScene {
             })
         } else {
             drawLine(from: nearestCircle, to: circle, onCompletion: {
+                self.playDistantConnectionSound()
                 nearestCircle.connectedCircles.append(circle)
                 circle.connectedCircles.append(nearestCircle)
                 
@@ -230,6 +236,8 @@ extension ContentScene {
             
             circleOrigin.runChangeColorAnimation(to: newColor, withDuration: 1)
             
+            onCompletion()
+            
             circleDest.runChangeColorAnimation(to: newColor, withDuration: 1, onCompletion: {
                 circleOrigin.resumeMovement()
                 circleDest.resumeMovement()
@@ -241,8 +249,6 @@ extension ContentScene {
                 if circleDest is MainCircle {
                     circleOrigin.runMoveCloserAnimation()
                 }
-                
-                onCompletion()
             })
         }
         
@@ -252,8 +258,10 @@ extension ContentScene {
     
     private func zoomCamera(touchedPos pos: CGPoint) {
         if pos.y > 0 {
+            playZoomOutSound()
             contentCamera.zoomOut(valueY: pos.y)
         } else {
+            playZoomInSound()
             contentCamera.zoomIn(valueY: pos.y)
         }
     }
@@ -312,7 +320,7 @@ extension ContentScene {
     
     private func getLineWhileTouchMoving(atPos pos: CGPoint) -> (Line, Int)? {
         for (i, line) in lines.enumerated() {
-            if line.node.contains(pos) {
+            if line.checkIfContains(pos) {
                 return (line, i)
             }
         }

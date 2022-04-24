@@ -13,6 +13,7 @@ class Line {
     let anchorCircleB: Circle
     var color: UIColor
     var line: SKShapeNode
+    var detectableLine: SKSpriteNode
     var animationProgress: CGFloat = 0
     var completedAnimation: Bool = false
     var completeAnimationCallback: () -> Void = {}
@@ -42,6 +43,32 @@ class Line {
             color: color
         )
         self.node.addChild(line)
+        
+        self.detectableLine = Line.buildDetectableLine(
+            pointA: anchorCircleA.node.position,
+            pointB: anchorCircleB.node.position
+        )
+        self.node.addChild(detectableLine)
+    }
+    
+    func checkIfContains(_ pos: CGPoint) -> Bool {
+        let anchorAPos = anchorCircleA.node.position
+        let anchorBPos = anchorCircleB.node.position
+        
+        /*
+         a = (ya - yb)
+         b = (xb - xa)
+         c = xa*yb - xb*ya
+         ax + by + c = 0
+         */
+        let a = anchorAPos.y - anchorBPos.y
+        let b = anchorBPos.x - anchorAPos.x
+        let c = anchorAPos.x*anchorBPos.y - anchorBPos.x*anchorAPos.y
+        let funcValue = (a*pos.x + b*pos.y + c)
+        
+        let isInsideLinearFuncion = (funcValue >= -400 && funcValue <= 400)
+        
+        return node.contains(pos) && isInsideLinearFuncion
     }
     
     func runChangeColorAnimation(to color: UIColor, withDuration duration: TimeInterval) {
@@ -109,6 +136,20 @@ class Line {
             }
         }
         setLinePath(posA: anchorAPos, posB: endPos)
+        detectableLine.removeFromParent()
+        detectableLine = Line.buildDetectableLine(
+            pointA: anchorAPos,
+            pointB: endPos
+        )
+        node.addChild(detectableLine)
+    }
+    
+    private func setLinePath(posA: CGPoint, posB: CGPoint) {
+        let newPath = CGMutablePath()
+        newPath.move(to: posA)
+        newPath.addLine(to: posB)
+        
+        line.path = newPath
     }
     
     static private func buildLine(
@@ -124,6 +165,22 @@ class Line {
         return line
     }
     
+    static private func buildDetectableLine(
+        pointA: CGPoint,
+        pointB: CGPoint
+    ) -> SKSpriteNode {
+        let angle = PositionUtils.getAngle(centerPoint: pointA, point: pointB)
+        let distance = PositionUtils.getDistance(pointA: pointA, pointB: pointB)
+        let newShapeNode = SKSpriteNode(
+            color: .clear,
+            size: CGSize(width: distance, height: Line.normalWidth)
+        )
+        newShapeNode.anchorPoint = .init(x: 0, y: 0.5)
+        newShapeNode.zPosition = 4
+        newShapeNode.zRotation = angle
+        return newShapeNode
+    }
+    
     static private func getAnchorsPositions(
         anchorA: Circle,
         anchorB: Circle,
@@ -133,13 +190,5 @@ class Line {
         let posB = refNode.convert(anchorB.circle.position, from: anchorB.node)
         
         return (posA, posB)
-    }
-    
-    private func setLinePath(posA: CGPoint, posB: CGPoint) {
-        let newPath = CGMutablePath()
-        newPath.move(to: posA)
-        newPath.addLine(to: posB)
-        
-        line.path = newPath
     }
 }

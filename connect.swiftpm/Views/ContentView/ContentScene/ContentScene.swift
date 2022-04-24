@@ -6,6 +6,7 @@
 //
 
 import SpriteKit
+import AVFoundation
 
 class ContentScene: SKScene, StoryProgressDelegate, TextOverlayDelegate {
     internal lazy var screenArea: CGFloat = {
@@ -32,6 +33,8 @@ class ContentScene: SKScene, StoryProgressDelegate, TextOverlayDelegate {
     internal var lines: [Line] = []
     internal var touchedNode: SKNode?
     internal var showingText: Bool = false
+    internal var zoomInSoundPlayer: AVAudioPlayer?
+    internal var zoomOutSoundPlayer: AVAudioPlayer?
     
     func getMainCircleColors() -> [CGColor] {
         return mainCircle.gradientColors
@@ -42,7 +45,7 @@ class ContentScene: SKScene, StoryProgressDelegate, TextOverlayDelegate {
         
         textOverlay.show(onCompletion: {
             self.textOverlay.nextStep(onCompletion: {
-                self.textOverlay.wait(forDuration: 1, onCompletion: {
+                self.textOverlay.wait(forDuration: 2, onCompletion: {
                     self.showingText = false
                     self.textOverlay.hide(onCompletion: {
                         onCompletion()
@@ -78,5 +81,11 @@ class ContentScene: SKScene, StoryProgressDelegate, TextOverlayDelegate {
         for t in touches { self.touchUp(atPoint: t.location(in: self)) }
     }
     
-    
+    internal enum ActionKeys {
+        static let connectionSoundAction: String = "connectionSoundAction"
+        static let cutSoundAction: String = "cutSoundAction"
+        static let tapSoundAction: String = "tapSoundAction"
+        static let zoomInSoundAction: String = "zoomInSoundAction"
+        static let zoomOutSoundAction: String = "zoomOutSoundAction"
+    }
 }

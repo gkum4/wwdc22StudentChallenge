@@ -44,7 +44,7 @@ class Tips {
     }
     
     func showCut() {
-        let newLabel = buildLabel("Cut lines")
+        let newLabel = buildLabel("Move slowly to cut lines")
         newLabel.alpha = 0
         let newTooltip = getCutTooltip()
         newTooltip.node.alpha = 0

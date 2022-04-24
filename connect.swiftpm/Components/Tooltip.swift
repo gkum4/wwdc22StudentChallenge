@@ -63,7 +63,7 @@ class Tooltip {
         
         let slideAnimation: SKAction = .sequence([
             .fadeIn(withDuration: 0.5),
-            .move(by: CGVector(dx: frame.height * 0.1, dy: 0), duration: 0.7),
+            .move(by: CGVector(dx: frame.height * 0.1, dy: 0), duration: 1.2),
             .fadeOut(withDuration: 0.5),
             .run {
                 newTooltip.position.x -= frame.height * 0.1
