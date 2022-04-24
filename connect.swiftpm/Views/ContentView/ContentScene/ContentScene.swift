@@ -45,7 +45,7 @@ class ContentScene: SKScene, StoryProgressDelegate, TextOverlayDelegate {
         
         textOverlay.show(onCompletion: {
             self.textOverlay.nextStep(onCompletion: {
-                self.textOverlay.wait(forDuration: 2, onCompletion: {
+                self.textOverlay.wait(forDuration: 3, onCompletion: {
                     self.showingText = false
                     self.textOverlay.hide(onCompletion: {
                         onCompletion()

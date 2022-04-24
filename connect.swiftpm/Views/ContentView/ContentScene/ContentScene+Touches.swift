@@ -6,7 +6,6 @@
 //
 
 import SpriteKit
-import AVKit
 
 extension ContentScene {
     internal func touchDown(atPoint pos: CGPoint) {

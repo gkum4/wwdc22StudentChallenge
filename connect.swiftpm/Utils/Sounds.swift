@@ -5,7 +5,7 @@
 //  Created by Gustavo Kumasawa on 23/04/22.
 //
 
-import AVFoundation
+import Foundation
 
 class Sounds {
     static func getFileName(for sound: Sounds) -> String {
