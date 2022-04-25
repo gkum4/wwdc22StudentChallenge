@@ -319,7 +319,7 @@ extension ContentScene {
     
     private func getLineWhileTouchMoving(atPos pos: CGPoint) -> (Line, Int)? {
         for (i, line) in lines.enumerated() {
-            if line.checkIfContains(pos) {
+            if line.node.contains(pos) {
                 return (line, i)
             }
         }
